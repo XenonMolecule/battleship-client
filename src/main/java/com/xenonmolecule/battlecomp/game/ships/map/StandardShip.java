@@ -1,4 +1,4 @@
-package com.xenonmolecule.battlecomp.game.ships;
+package com.xenonmolecule.battlecomp.game.ships.map;
 
 import com.xenonmolecule.battlecomp.game.Map;
 import com.xenonmolecule.battlecomp.game.MisplacedShipException;

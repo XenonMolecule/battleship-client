@@ -1,21 +1,17 @@
-package com.xenonmolecule.battlecomp.game.ships;
+package com.xenonmolecule.battlecomp.bot.Botholomew.attacking.ships;
 
-import com.xenonmolecule.battlecomp.game.Map;
-import com.xenonmolecule.battlecomp.game.MisplacedShipException;
 import com.xenonmolecule.battlecomp.io.Coordinate;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class MapShip {
-
-    public static final double BUFFER_MOD = 0.1; // was 0.25, but 0.1 separates ships even better
+public abstract class SunkShip {
 
     private String name;
     private int length, x, y, orientation;
     List<Coordinate> coords = new ArrayList<Coordinate>();
 
-    public MapShip(String name, int length, int x, int y, int orientation) {
+    public SunkShip(String name, int length, int x, int y, int orientation) {
         this.name = name;
         this.length = length;
         this.x = x;
@@ -53,22 +49,6 @@ public abstract class MapShip {
 
     public void setCoords(List<Coordinate> coordinates) {
         coords = coordinates;
-    }
-
-    public abstract void place(Map map) throws MisplacedShipException;
-
-    // Surrounds point with buffer points
-    public void surroundPoint(int x, int y, Map map) {
-        for(int i = -2; i < 3; i ++) {
-            for(int j = -2; j < 3; j ++) {
-                map.setCoord(x+i,y+j,BUFFER_MOD);
-            }
-        }
-    }
-
-    @Override
-    public String toString() {
-        return name + " - (" + x + "," + y + "," + orientation + ")";
     }
 
 }

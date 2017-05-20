@@ -2,10 +2,10 @@ package com.xenonmolecule.battlecomp.bot.Botholomew;
 
 import com.xenonmolecule.battlecomp.game.Map;
 import com.xenonmolecule.battlecomp.game.MisplacedShipException;
-import com.xenonmolecule.battlecomp.game.ships.AircraftCarrierShip;
-import com.xenonmolecule.battlecomp.game.ships.MapShip;
-import com.xenonmolecule.battlecomp.game.ships.StandardShip;
-import com.xenonmolecule.battlecomp.game.ships.SubmarineShip;
+import com.xenonmolecule.battlecomp.game.ships.map.AircraftCarrierShip;
+import com.xenonmolecule.battlecomp.game.ships.map.MapShip;
+import com.xenonmolecule.battlecomp.game.ships.map.StandardShip;
+import com.xenonmolecule.battlecomp.game.ships.map.SubmarineShip;
 import com.xenonmolecule.battlecomp.io.Coordinate;
 import com.xenonmolecule.battlecomp.math.WeightedRandom;
 

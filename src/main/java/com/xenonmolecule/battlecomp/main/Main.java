@@ -2,13 +2,13 @@ package com.xenonmolecule.battlecomp.main;
 
 import com.xenonmolecule.battlecomp.bot.Botholomew.Botholomew;
 import com.xenonmolecule.battlecomp.game.Map;
-import com.xenonmolecule.battlecomp.game.ships.MapShip;
+import com.xenonmolecule.battlecomp.game.ships.map.MapShip;
 
 public class Main {
     public static void main(String[] args) {
         //new Battlecomp();
         Botholomew bot = new Botholomew();
-        Map map = bot.placeShips();
+        Map map = bot.autoPlaceShips();
         int[][] ships = map.toBasicArr();
 
         String print = "";

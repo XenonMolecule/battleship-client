@@ -1,10 +1,5 @@
 package com.xenonmolecule.battlecomp.io;
 
-import com.xenonmolecule.battlecomp.io.BattlecompClient;
-import com.xenonmolecule.battlecomp.io.Coordinate;
-import com.xenonmolecule.battlecomp.io.GameState;
-import com.xenonmolecule.battlecomp.io.PlacedShip;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -85,7 +80,7 @@ public class BattlecompTest extends BattlecompClient {
 
     @Override
     public void onGamestateUpdate(GameState state) {
-
+        // TODO: STUFF LATER IF I WANT
     }
 
     @Override

@@ -1,6 +1,6 @@
 package com.xenonmolecule.battlecomp.game;
 
-import com.xenonmolecule.battlecomp.game.ships.MapShip;
+import com.xenonmolecule.battlecomp.game.ships.map.MapShip;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
