@@ -1,5 +1,10 @@
 package com.xenonmolecule.battlecomp.io;
 
+import com.xenonmolecule.battlecomp.bot.Botholomew.Botholomew;
+import com.xenonmolecule.battlecomp.bot.Botholomew.Placer;
+import com.xenonmolecule.battlecomp.game.Map;
+import com.xenonmolecule.battlecomp.game.ships.map.MapShip;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -8,35 +13,7 @@ public class BattlecompTest extends BattlecompClient {
 
     public static void main(String[] args) {
 
-        BattlecompClient conn2 = new BattlecompTest() {
-            @Override
-            public void onGamestateUpdate(GameState state) {
-                // TODO Whatever tbh, nothing really required here
-            }
-
-            @Override
-            public Coordinate takeTurn() {
-                if (x > 9)
-                    x = 0;
-                return new Coordinate(0, x++); // TODO Implement
-            }
-
-            @Override
-            public List<PlacedShip> placeShips() {
-                ArrayList<PlacedShip> ships = new ArrayList<>();
-                PlacedShip patrol = new PlacedShip("patrol", 2, 0, 0, 0);
-                ships.add(patrol);
-                PlacedShip cruiser = new PlacedShip("cruiser", 3, 0, 1, 0);
-                ships.add(cruiser);
-                PlacedShip battleship = new PlacedShip("battleship", 4, 0, 2, 0);
-                ships.add(battleship);
-                PlacedShip submarine = new PlacedShip("submarine", 5, 5, 0);
-                ships.add(submarine);
-                PlacedShip carrier = new PlacedShip("aircraft carrier", 5, 8, 0);
-                ships.add(carrier);
-                return ships;
-            }
-        };
+        BattlecompClient conn2 = new Botholomew();
 
         BattlecompClient conn1 = new BattlecompTest() {
             @Override
@@ -54,18 +31,20 @@ public class BattlecompTest extends BattlecompClient {
 
             @Override
             public List<PlacedShip> placeShips() {
-                ArrayList<PlacedShip> ships = new ArrayList<>();
-                PlacedShip patrol = new PlacedShip("patrol", 2, 0, 0, 0);
-                ships.add(patrol);
-                PlacedShip cruiser = new PlacedShip("cruiser", 3, 0, 1, 0);
-                ships.add(cruiser);
-                PlacedShip battleship = new PlacedShip("battleship", 4, 0, 2, 0);
-                ships.add(battleship);
-                PlacedShip submarine = new PlacedShip("submarine", 5, 5, 0);
-                ships.add(submarine);
-                PlacedShip carrier = new PlacedShip("aircraft carrier", 5, 8, 0);
-                ships.add(carrier);
-                return ships;
+                Placer botholomewPlacer = new Placer();
+                Map map = botholomewPlacer.generateBoard();
+                List<MapShip> ships = map.getShips();
+                List<PlacedShip> shipsList = new ArrayList<PlacedShip>();
+                for (MapShip ship : ships) {
+                    PlacedShip shipPlacement;
+                    if (ship.getName().equalsIgnoreCase("Submarine") || ship.getName().equalsIgnoreCase("Aircraft Carrier")) {
+                        shipPlacement = new PlacedShip(ship.getName().toLowerCase(), ship.getX(), ship.getY(), ship.getOrientation());
+                    } else {
+                        shipPlacement = new PlacedShip(ship.getName().toLowerCase(), ship.getLength(), ship.getX(), ship.getY(), ship.getOrientation());
+                    }
+                    shipsList.add(shipPlacement);
+                }
+                return shipsList;
             }
         };
         conn1.connect("http://localhost:8080");

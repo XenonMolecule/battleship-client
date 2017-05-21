@@ -12,12 +12,12 @@ public abstract class Bot extends BattlecompClient{
 
     public Bot(Map map) {
         this.map = map;
-        this.oppMap = fillArr(new int[Map.MAP_HEIGHT][Map.MAP_WIDTH], 1);
+        this.oppMap = fillArr(new int[Map.MAP_HEIGHT][Map.MAP_WIDTH], 0);
     }
 
     public Bot() {
         this.map = new Map();
-        this.oppMap = fillArr(new int[Map.MAP_HEIGHT][Map.MAP_WIDTH], 1);
+        this.oppMap = fillArr(new int[Map.MAP_HEIGHT][Map.MAP_WIDTH], 0);
     }
 
     public abstract Coordinate autoTakeTurn();
@@ -37,7 +37,7 @@ public abstract class Bot extends BattlecompClient{
     }
 
     public void setOppMap(int[][] map) {
-        this.oppMap = oppMap;
+        this.oppMap = map;
     }
 
     private int[][] fillArr(int[][] arr, int val) {

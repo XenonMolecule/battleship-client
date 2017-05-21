@@ -22,6 +22,13 @@ public class MapPreProcessor {
                 map[coord.getY()][coord.getX()] = -1;
             }
         }
+        for(int i = 0; i < map.length; i ++) {
+            for(int j= 0; j < map[i].length; j ++) {
+                if(map[i][j] == 2) {
+                    map[i][j] = -1;
+                }
+            }
+        }
         return map;
     }
 

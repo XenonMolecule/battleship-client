@@ -51,7 +51,9 @@ public class Botholomew extends Bot {
     @Override
     public Coordinate autoTakeTurn() {
         BoardScanner attacker = new BoardScanner(new HitMap(getOppMap()));
-        return attacker.getBestShot(unsunk);
+        Coordinate bestShot = attacker.getBestShot(unsunk);
+        System.out.println("(" + bestShot.getX() + "," + bestShot.getY() +")");
+        return bestShot;
     }
 
     @Override

@@ -89,19 +89,42 @@ public class BoardScanner {
 
     public Coordinate getBestShot(ArrayList<HitShip> unsunk) {
         int[][] map = hitMap.getMap();
+
         boolean noHits = true;
         ArrayList<Coordinate> hits = new ArrayList<Coordinate>();
+        ArrayList<Coordinate> misses = new ArrayList<Coordinate>();
         for(int y = 0; y < map.length; y ++) {
             for(int x = 0; x < map[y].length; x ++) {
                 noHits = noHits && map[y][x] != 1;
                 if(map[y][x] == 1)
                     hits.add(new Coordinate(x,y));
+                else if(map[y][x] == -1)
+                    misses.add(new Coordinate(x,y));
             }
         }
         if(!noHits) {
+            System.out.println("Picking shot pos based on hit");
             for(Coordinate hit : hits) {
                 weightBoard(hit, unsunk);
             }
+
+            // Make sure we don't shoot at hits and misses
+            for(Coordinate hit : hits) {
+                try {
+                    hitMap.setPoint(hit.getX(), hit.getY(), true, 0);
+                } catch (Exception e) {
+                    System.out.println("I would be surprised if I EVER saw this get printed out");
+                }
+            }
+
+            for(Coordinate miss : misses) {
+                try {
+                    hitMap.setPoint(miss.getX(), miss.getY(), true, 0);
+                } catch (Exception e) {
+                    System.out.println("I would be surprised if I EVER saw this get printed out");
+                }
+            }
+
             int[][] wMap = hitMap.getMap();
             int max = -1;
             ArrayList<Coordinate> bestShots = new ArrayList<Coordinate>();
@@ -116,6 +139,16 @@ public class BoardScanner {
                     }
                 }
             }
+
+            String print = "";
+            for(int i = 0; i < wMap.length; i++) {
+                for(int j = 0; j < wMap[i].length; j ++) {
+                    print += wMap[i][j] + " ";
+                }
+                print += "\n";
+            }
+            System.out.println(print);
+
             // Fire at one of the most likely spots
             if(bestShots.size() > 1) {
                 Random gen = new Random();
@@ -124,12 +157,13 @@ public class BoardScanner {
                 return bestShots.get(0);
             }
         } else {
+            System.out.println("Taking weighted random shot");
             // Take weighted random shot
             for(int y = 0; y < map.length; y ++) {
                 for(int x = 0; x < map.length; x ++) {
                     if(map[y][x] != -1){
                         try {
-                            hitMap.setPoint(x,y,false,4);
+                            hitMap.setPoint(x,y,false,10);
                         } catch (Exception e) {}
                     }
                 }
@@ -139,17 +173,66 @@ public class BoardScanner {
                 for(int x = 0; x < map.length; x ++) {
                     if(map[y][x] == -1){
                         try {
-                            hitMap.setPoint(x + 1, y, 1);
-                            hitMap.setPoint(x - 1, y, 1);
-                            hitMap.setPoint(x, y + 1, 1);
-                            hitMap.setPoint(x, y - 1, 1);
-                            hitMap.setPoint(x, y, 0);
+                            hitMap.setPoint(x + 1, y, true, 1);
+                        } catch (Exception e) {}
+                        try {
+                            hitMap.setPoint(x - 1, y, true, 1);
+                        } catch (Exception e) {}
+                        try {
+                            hitMap.setPoint(x, y + 1, true, 1);
+                        } catch (Exception e) {}
+                        try {
+                            hitMap.setPoint(x, y - 1, true, 1);
+                        } catch (Exception e) {}
+                        try {
+                            hitMap.setPoint(x, y, true, 0);
                         } catch (Exception e) {}
                     }
                 }
             }
 
             int[][] wMap = hitMap.getMap();
+
+            // Prevent wasted shots on places where hitting is impossible
+            for(int y = 0; y < wMap.length; y ++) {
+                for(int x = 0; x < wMap[y].length; x ++) {
+                    if(wMap[y][x] == 1) {
+                        int sum = 0;
+                        try {
+                            if(hitMap.getPoint(x,y-1) == -1)
+                                sum++;
+                        } catch (ArrayIndexOutOfBoundsException e) {
+                            sum++;
+                        }
+                        try {
+                            if(hitMap.getPoint(x,y+1) == -1)
+                                sum++;
+                        } catch (ArrayIndexOutOfBoundsException e) {
+                            sum++;
+                        }
+                        try {
+                            if(hitMap.getPoint(x+1,y) == -1)
+                                sum++;
+                        } catch (ArrayIndexOutOfBoundsException e) {
+                            sum++;
+                        }
+                        try {
+                            if(hitMap.getPoint(x-1,y) == -1)
+                                sum++;
+                        } catch (ArrayIndexOutOfBoundsException e) {
+                            sum++;
+                        }
+                        if(sum==4) {
+                            try {
+                                hitMap.setPoint(x, y, true, 0);
+                            } catch (Exception e) {}
+                        }
+                    }
+                }
+            }
+
+            wMap = hitMap.getMap();
+
             int [] oneDMap = new int[Map.MAP_WIDTH * Map.MAP_HEIGHT];
             for(int y = 0; y < wMap.length; y ++) {
                 for(int x = 0; x < wMap[y].length; x ++) {

@@ -14,8 +14,8 @@ public class WeightedRandom {
         double lastChance = 0.0;
         chances = new double[weight.length];
         for(int j = 0; j < weight.length; j ++) {
-            chances[j] = lastChance + (weight[j]/totalW);
-            lastChance += (weight[j]/totalW);
+            chances[j] = lastChance + ((double) weight[j]/totalW);
+            lastChance += ((double) weight[j]/totalW);
         }
     }
 
