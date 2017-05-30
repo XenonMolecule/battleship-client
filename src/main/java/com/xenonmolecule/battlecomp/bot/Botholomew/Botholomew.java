@@ -12,10 +12,13 @@ import com.xenonmolecule.battlecomp.game.Map;
 import com.xenonmolecule.battlecomp.game.MisplacedShipException;
 import com.xenonmolecule.battlecomp.game.ships.hit.HitShip;
 import com.xenonmolecule.battlecomp.game.ships.map.MapShip;
+import com.xenonmolecule.battlecomp.graphics.BattleshipBoard;
 import com.xenonmolecule.battlecomp.io.Coordinate;
 import com.xenonmolecule.battlecomp.io.GameState;
 import com.xenonmolecule.battlecomp.io.PlacedShip;
 
+import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,9 +26,39 @@ public class Botholomew extends Bot {
 
     ArrayList<HitShip> unsunk = new ArrayList<HitShip>();
     ArrayList<SunkShip> sunk = new ArrayList<SunkShip>();
+    BattleshipBoard ourBoard = new BattleshipBoard();
+    BattleshipBoard oppBaseBoard = new BattleshipBoard();
+    BattleshipBoard weighedBoard = new BattleshipBoard();
 
-    public Botholomew(Map map) {
+    public Botholomew(Map map, boolean graphics) {
         super(map);
+        connect("http://localhost:8080");
+        unsunk.add(HitShip.PATROL);
+        unsunk.add(HitShip.CRUISER);
+        unsunk.add(HitShip.BATTLESHIP);
+        unsunk.add(HitShip.SUBMARINE);
+        unsunk.add(HitShip.AIRCRAFT_CARRIER);
+        if(graphics) {
+            setupGraphics();
+        }
+    }
+
+    public Botholomew(boolean graphics) {
+        super();
+        connect("http://localhost:8080");
+        unsunk.add(HitShip.PATROL);
+        unsunk.add(HitShip.CRUISER);
+        unsunk.add(HitShip.BATTLESHIP);
+        unsunk.add(HitShip.SUBMARINE);
+        unsunk.add(HitShip.AIRCRAFT_CARRIER);
+        if(graphics) {
+            setupGraphics();
+        }
+    }
+
+    public Botholomew() {
+        super();
+        connect("http://localhost:8080");
         unsunk.add(HitShip.PATROL);
         unsunk.add(HitShip.CRUISER);
         unsunk.add(HitShip.BATTLESHIP);
@@ -33,13 +66,52 @@ public class Botholomew extends Bot {
         unsunk.add(HitShip.AIRCRAFT_CARRIER);
     }
 
-    public Botholomew() {
-        super();
-        unsunk.add(HitShip.PATROL);
-        unsunk.add(HitShip.CRUISER);
-        unsunk.add(HitShip.BATTLESHIP);
-        unsunk.add(HitShip.SUBMARINE);
-        unsunk.add(HitShip.AIRCRAFT_CARRIER);
+    void setupGraphics() {
+        JFrame frame;
+        frame = new JFrame("[Michael] Battleship Bot");
+        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        frame.setPreferredSize(new Dimension(1393, 738));
+        frame.setResizable(false);
+        frame.setMinimumSize(frame.getPreferredSize());
+        frame.setLayout(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(10, 10, 10, 10);
+
+        // Our basic board showing hits misses and kills
+        JPanel basicBoardCont = new JPanel(new BorderLayout());
+        JLabel basicBoardLabel = new JLabel("Botholomew Board:");
+
+        ourBoard.setCells(new int[10][10]);
+        basicBoardCont.add(basicBoardLabel, BorderLayout.NORTH);
+        basicBoardCont.add(ourBoard, BorderLayout.CENTER);
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        frame.getContentPane().add(basicBoardCont, gbc);
+
+        // Our board showing weighed board for our ship
+        JPanel weighedBoardCont = new JPanel(new BorderLayout());
+        JLabel weighedBoardLabel = new JLabel("Weighed Board:");
+        weighedBoard = new BattleshipBoard();
+        weighedBoard.setCells(new int[10][10]);
+        weighedBoardCont.add(weighedBoardLabel, BorderLayout.NORTH);
+        weighedBoardCont.add(weighedBoard, BorderLayout.CENTER);
+        gbc.gridx = 1;
+        gbc.gridy = 0;
+        frame.getContentPane().add(weighedBoardCont, gbc);
+
+        // Our opponent's basic board showing hits misses and kills
+        JPanel oppBasicBoardCont = new JPanel(new BorderLayout());
+        JLabel oppBasicBoardLabel = new JLabel("Opponent Board:");
+
+        oppBaseBoard.setCells(new int[10][10]);
+        oppBasicBoardCont.add(oppBasicBoardLabel, BorderLayout.NORTH);
+        oppBasicBoardCont.add(oppBaseBoard, BorderLayout.CENTER);
+        gbc.gridx = 2;
+        gbc.gridy = 0;
+        frame.getContentPane().add(oppBasicBoardCont, gbc);
+
+        frame.pack();
+        frame.setVisible(true);
     }
 
     /////////////////////////////////////////////////////////////////////
@@ -53,6 +125,7 @@ public class Botholomew extends Bot {
         BoardScanner attacker = new BoardScanner(new HitMap(getOppMap()));
         Coordinate bestShot = attacker.getBestShot(unsunk);
         System.out.println("(" + bestShot.getX() + "," + bestShot.getY() +")");
+        weighedBoard.setCells(attacker.getDisplayMapF());
         return bestShot;
     }
 
@@ -119,6 +192,7 @@ public class Botholomew extends Bot {
                     ship = new StandardSunkShip("Patrol", 2, x, y, orientation);
             }
             sunk.add(ship);
+            onMapUpdate(getOppMap());
         } catch (MisplacedShipException e) {
             System.out.println("\n\nI am going to keep running, but a major error just got sent by the server giving an invalid position of a sunk ship...\n\n");
         }
@@ -127,12 +201,14 @@ public class Botholomew extends Bot {
     @Override
     public void onMapUpdate(int[][] map) {
         MapPreProcessor precheck = new MapPreProcessor(map, sunk);
+        precheck.preprocessGraphics();
+        ourBoard.setCells(map);
         setOppMap(precheck.preprocess());
     }
 
     @Override
     public void onOppMapUpdate(int[][] map) {
-        //TODO: DISPLAY OPPONENT MAP LATER IF I WANT
+        oppBaseBoard.setCells(map);
     }
 
     @Override

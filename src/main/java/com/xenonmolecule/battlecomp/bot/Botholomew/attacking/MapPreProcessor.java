@@ -32,4 +32,13 @@ public class MapPreProcessor {
         return map;
     }
 
+    public int[][] preprocessGraphics() {
+        for(SunkShip ship : ships) {
+            for(Coordinate coord : ship.getCoords()) {
+                map[coord.getY()][coord.getX()] = 3;
+            }
+        }
+        return map;
+    }
+
 }

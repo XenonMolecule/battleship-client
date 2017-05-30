@@ -13,6 +13,7 @@ import java.util.Random;
 public class BoardScanner {
 
     HitMap hitMap;
+    double[][] displayMap = new double[Map.MAP_HEIGHT][Map.MAP_WIDTH];
 
     public BoardScanner(HitMap hitMap) {
         this.hitMap = hitMap;
@@ -140,6 +141,12 @@ public class BoardScanner {
                 }
             }
 
+            for(int i = 0; i < wMap.length; i ++) {
+                for(int j = 0; j < wMap[i].length; j++) {
+                    displayMap[i][j] = wMap[i][j];
+                }
+            }
+
             String print = "";
             for(int i = 0; i < wMap.length; i++) {
                 for(int j = 0; j < wMap[i].length; j ++) {
@@ -148,6 +155,26 @@ public class BoardScanner {
                 print += "\n";
             }
             System.out.println(print);
+
+            // I can't fix this glitch right now, but make sure if it is confused it doesn't shoot at a hit
+            boolean notZero = false;
+            for(int i = 0; i < wMap.length; i ++) {
+                for(int j = 0; j < wMap[i].length; j ++) {
+                    if(wMap[i][j]!=0) {
+                        notZero = true;
+                        break;
+                    }
+                }
+            }
+
+            if(!notZero) {
+                for(int i = 0; i < 25; i ++)
+                    System.out.println("Something is horribly wrong");
+                RandomAttacker randAtt = new RandomAttacker(hitMap, unsunk);
+                Coordinate attPos = randAtt.getAttackPosition();
+                displayMap = randAtt.getDisplayBoard();
+                return attPos;
+            }
 
             // Fire at one of the most likely spots
             if(bestShots.size() > 1) {
@@ -158,6 +185,7 @@ public class BoardScanner {
             }
         } else {
             System.out.println("Taking weighted random shot");
+            /*
             // Take weighted random shot
             for(int y = 0; y < map.length; y ++) {
                 for(int x = 0; x < map.length; x ++) {
@@ -242,6 +270,11 @@ public class BoardScanner {
 
             WeightedRandom gen = new WeightedRandom(oneDMap);
             return convNumToCoord(gen.generateRandom());
+            */
+            RandomAttacker randAtt = new RandomAttacker(hitMap, unsunk);
+            Coordinate attPos = randAtt.getAttackPosition();
+            displayMap = randAtt.getDisplayBoard();
+            return attPos;
         }
     }
 
@@ -249,6 +282,33 @@ public class BoardScanner {
         int y = num / Map.MAP_WIDTH;
         int x = num % Map.MAP_WIDTH;
         return new Coordinate(x,y);
+    }
+
+    public double[][] getDisplayMap() {
+        double greatest = 0.0;
+        for(int i = 0; i < displayMap.length; i ++) {
+            for(int j = 0; j < displayMap[i].length; j ++) {
+                if(displayMap[i][j]>greatest)
+                    greatest = displayMap[i][j];
+            }
+        }
+        for(int i = 0; i < displayMap.length; i ++) {
+            for(int j = 0; j < displayMap[i].length; j ++) {
+                displayMap[i][j] = displayMap[i][j]/greatest;
+            }
+        }
+        return displayMap;
+    }
+
+    public float[][] getDisplayMapF() {
+        double[][] map = getDisplayMap();
+        float[][] mapF = new float[Map.MAP_HEIGHT][Map.MAP_WIDTH];
+        for(int i = 0; i < map.length; i ++) {
+            for(int j = 0; j < map[i].length; j ++) {
+                mapF[i][j] = (float) map[i][j];
+            }
+        }
+        return mapF;
     }
 
 }

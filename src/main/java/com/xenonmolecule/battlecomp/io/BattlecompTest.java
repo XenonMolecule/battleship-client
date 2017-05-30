@@ -4,7 +4,10 @@ import com.xenonmolecule.battlecomp.bot.Botholomew.Botholomew;
 import com.xenonmolecule.battlecomp.bot.Botholomew.Placer;
 import com.xenonmolecule.battlecomp.game.Map;
 import com.xenonmolecule.battlecomp.game.ships.map.MapShip;
+import com.xenonmolecule.battlecomp.graphics.BattleshipBoard;
 
+import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,7 +16,7 @@ public class BattlecompTest extends BattlecompClient {
 
     public static void main(String[] args) {
 
-        BattlecompClient conn2 = new Botholomew();
+        BattlecompClient conn2 = new Botholomew(true);
 
         BattlecompClient conn1 = new BattlecompTest() {
             @Override
@@ -26,6 +29,11 @@ public class BattlecompTest extends BattlecompClient {
 
             @Override
             public Coordinate takeTurn() {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
                 return new Coordinate(0, 0); // TODO Implement
             }
 

@@ -18,7 +18,7 @@ public class AircraftCarrrierSunkShip extends SunkShip {
             currPos = new Coordinate(currPos.getX() - 3, currPos.getY() + 1);
             orientation = 0;
         } else if(orientation == 3) {
-            currPos = new Coordinate(currPos.getX() + 1, currPos.getY() - 3);
+            currPos = new Coordinate(currPos.getX() + 1, currPos.getY() + 3);
             orientation = 1;
         }
 

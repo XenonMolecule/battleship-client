@@ -3,7 +3,7 @@ package com.xenonmolecule.battlecomp.bot.Botholomew.attacking;
 import com.xenonmolecule.battlecomp.game.Map;
 import com.xenonmolecule.battlecomp.game.MisplacedShipException;
 
-public class HitMap {
+public class HitMap implements Cloneable {
 
     private int[][] map;
 
@@ -57,6 +57,17 @@ public class HitMap {
 
     public boolean testPoint(int x, int y) {
         return (((x < Map.MAP_WIDTH && x >= 0) && (y < Map.MAP_HEIGHT && y >= 0)) && map[y][x] >= 0);
+    }
+
+    @Override
+    public HitMap clone() {
+        int[][] points = new int[map.length][map[0].length];
+        for(int i = 0; i < map.length; i ++) {
+            for(int j = 0; j < map[i].length; j ++) {
+                points[i][j] = map[i][j];
+            }
+        }
+        return new HitMap(points);
     }
 
 

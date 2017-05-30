@@ -21,10 +21,19 @@ public abstract class BattlecompClient {
     private int gameId;
     private boolean connected;
     private GameState state = GameState.DISCONNECTED;
+    private String preifx = "";
+
+    public BattlecompClient(String prefix) {
+        this.preifx = prefix;
+    }
 
     public BattlecompClient() {
+        this("");
+    }
 
-
+    public void runAsync(Runnable r) {
+        //new Thread(r).start();
+        r.run();
     }
 
     public void connect(String IP) {
@@ -44,70 +53,93 @@ public abstract class BattlecompClient {
 
         // Connecting
         socket.on("connect", args -> {
-            onConnect();
+            runAsync(this::onConnect);
         });
 
         socket.on("failure", args -> {
-            System.out.println("> Uh oh, Battlecomp ran into a brick wall...");
-            for (Object arg : args)
-                System.out.println("--> " + arg);
+            runAsync(() -> {
+                System.out.println(preifx+"> Uh oh, Battlecomp ran into a brick wall...");
+                for (Object arg : args)
+                    System.out.println("--> " + arg);
+            });
+        });
+
+        socket.on("victory", args -> {
+            runAsync(() -> {
+                System.out.println(preifx+"> We won!");
+                victory();
+                setState(GameState.COMPLETED);
+            });
+        });
+
+        socket.on("loss", args -> {
+            runAsync(() -> {
+                System.out.println(preifx+"> We lost, plz git gud");
+                loss();
+                setState(GameState.COMPLETED);
+            });
         });
 
         socket.on("updateBoard", args -> {
-            System.out.println("> Battlecomp sent our opponents hits: ");
-            int[][] map = new int[10][10];
-            try {
-                System.out.println(args[0]);
-                JSONArray lines = ((JSONObject) args[0]).getJSONArray("board");
-                System.out.println("-->    0 1 2 3 4 5 6 7 8 9");
-                System.out.println("-->   *--------------------*");
-                for (int i = 0; i < lines.length(); i++) {
-                    System.out.print("--> " + i + " |");
-                    JSONArray line = lines.getJSONArray(i);
-                    for (int j = 0; j < line.length(); j++) {
-                        map[i][j] = line.getInt(j);
-                        if (line.getInt(j) == 1)
-                            System.out.print("X ");
-                        else if (line.getInt(j) == 2)
-                            System.out.print("O ");
-                        else
-                            System.out.print("  ");
+            runAsync(() -> {
+                System.out.println(preifx+"> Battlecomp sent our hits: ");
+                int[][] map = new int[10][10];
+                try {
+                    System.out.println(args[0]);
+                    JSONArray lines = ((JSONObject) args[0]).getJSONArray("board");
+                    System.out.println("-->    0 1 2 3 4 5 6 7 8 9");
+                    System.out.println("-->   *--------------------*");
+                    for (int i = 0; i < lines.length(); i++) {
+                        System.out.print("--> " + i + " |");
+                        JSONArray line = lines.getJSONArray(i);
+                        for (int j = 0; j < line.length(); j++) {
+                            map[i][j] = line.getInt(j);
+                            if (line.getInt(j) == 1)
+                                System.out.print("X ");
+                            else if (line.getInt(j) == 2)
+                                System.out.print("O ");
+                            else
+                                System.out.print("  ");
+                        }
+                        System.out.println("|");
                     }
-                    System.out.println("|");
+                    System.out.println("-->   *--------------------*");
+                } catch (JSONException e) {
+                    e.printStackTrace();
                 }
-                System.out.println("-->   *--------------------*");
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-            onMapUpdate(map);
+                System.out.println(preifx+"> Battlecomp calling onMapUpdate ");
+                onMapUpdate(map);
+            });
         });
 
         socket.on("updateOppDisp", args -> {
-            System.out.println("> Battlecomp sent our opponents hits: ");
-            int[][] map = new int[10][10];
-            try {
-                JSONArray lines = ((JSONObject) args[0]).getJSONArray("board");
-                System.out.println("-->    0 1 2 3 4 5 6 7 8 9");
-                System.out.println("-->   *--------------------*");
-                for (int i = 0; i < lines.length(); i++) {
-                    System.out.print("--> " + i + " |");
-                    JSONArray line = lines.getJSONArray(i);
-                    for (int j = 0; j < line.length(); j++) {
-                        map[i][j] = line.getInt(j);
-                        if (line.getInt(j) == 1)
-                            System.out.print("X ");
-                        else if (line.getInt(j) == 2)
-                            System.out.print("O ");
-                        else
-                            System.out.print("  ");
+            runAsync(() -> {
+                System.out.println(preifx+"> Battlecomp sent our opponents hits: ");
+                int[][] map = new int[10][10];
+                try {
+                    JSONArray lines = ((JSONObject) args[0]).getJSONArray("board");
+                    System.out.println("-->    0 1 2 3 4 5 6 7 8 9");
+                    System.out.println("-->   *--------------------*");
+                    for (int i = 0; i < lines.length(); i++) {
+                        System.out.print("--> " + i + " |");
+                        JSONArray line = lines.getJSONArray(i);
+                        for (int j = 0; j < line.length(); j++) {
+                            map[i][j] = line.getInt(j);
+                            if (line.getInt(j) == 1)
+                                System.out.print("X ");
+                            else if (line.getInt(j) == 2)
+                                System.out.print("O ");
+                            else
+                                System.out.print("  ");
+                        }
+                        System.out.println("|");
                     }
-                    System.out.println("|");
+                    System.out.println("-->   *--------------------*");
+                } catch (JSONException e) {
+                    e.printStackTrace();
                 }
-                System.out.println("-->   *--------------------*");
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-            onOppMapUpdate(map);
+                onOppMapUpdate(map);
+            });
         });
 
         // Test message and response
@@ -121,120 +153,198 @@ public abstract class BattlecompClient {
 
         // Handle opponents being sunk
         socket.on("sinkUpdate", args -> {
-            System.out.println("> Got sink update:");
-            for (Object o : args) {
-                if (o instanceof JSONObject)
-                    System.out.println("--> " + o.toString());
-            }
+            runAsync(() -> {
+                System.out.println(preifx+"> Got sink update:");
+                for (Object o : args) {
+                    if (o instanceof JSONObject)
+                        System.out.println("--> " + o.toString());
+                }
+            });
         });
 
         // Call disconnect
         socket.on("disconnect", args -> {
-            onDisconnect();
+            runAsync(this::onDisconnect);
         });
 
         // Handle another form of disconnect
         socket.on("partnerDisconnect", args -> {
-            System.out.println("> Partner disconnected from match!");
-            onDisconnect();
+            runAsync(() -> {
+                System.out.println(preifx+"> Partner disconnected from match!");
+                onDisconnect();
+            });
         });
 
         // Print ID
         socket.on("getId", args -> {
-            System.out.println(args[0]);
+            runAsync(() -> System.out.println(args[0]));
         });
 
         // When it's our turn, pick a coordinate and send it back
         socket.on("takeTurn", args -> {
-            System.out.println("> Battlecomp asked us to take turn!");
-            Coordinate toAttack = takeTurn();
-            System.out.println("> Sending attack request ");
-            socket.emit("submitTurn", toAttack.toJson());
+            runAsync(() -> {
+                System.out.println(preifx+"> Battlecomp asked us to take turn!");
+                Coordinate toAttack = takeTurn();
+                System.out.println(preifx+"> Sending attack request to (" + toAttack.getX() + ", " + toAttack.getY() + ")");
+                socket.emit("submitTurn", toAttack.toJson());
+            });
         });
 
         // When we can start, tell implementation
         socket.on("canStart", args -> {
-            System.out.println("> Battlecomp game is now able to be started!");
-            setState(GameState.CAN_START);
-            onCanStart();
+            runAsync(() -> {
+                System.out.println(preifx+"> Battlecomp game is now able to be started!");
+                setState(GameState.CAN_START);
+                onCanStart();
+            });
         });
 
         // When we can start, tell implementation
         socket.on("canPlay", args -> {
-            System.out.println("> Battlecomp game is now able to be played!");
-            setState(GameState.CAN_PLAY);
-            onCanPlay();
+            runAsync(() -> {
+                System.out.println(preifx+"> Battlecomp game is now able to be played!");
+                setState(GameState.CAN_PLAY);
+                onCanPlay();
+            });
         });
 
         // Handle sunk ships
         socket.on("sinkUpdate", args -> {
-            System.out.println("> Battlecomp told us we sunk a ship!");
-            JSONObject object = (JSONObject) args[0];
-            try {
-                int x = object.getInt("coordX");
-                int y = object.getInt("coordY");
-                int orientation = object.getInt("orientation");
-                String shipType = object.getString("type");
-                System.out.println(shipType + " at (" + x + "," + y + ")");
-                onShipSunk(shipType, x, y, orientation);
-            } catch (JSONException e) {
-                e.printStackTrace();
-                System.out.println("--> Failed to handle sunk ship!");
-            }
+            runAsync(() -> {
+                System.out.println(preifx+"> Battlecomp told us we sunk a ship!");
+                JSONObject object = (JSONObject) args[0];
+                try {
+                    int x = object.getInt("coordX");
+                    int y = object.getInt("coordY");
+                    int orientation = object.getInt("orientation");
+                    String shipType = object.getString("type");
+                    System.out.println(shipType + " at (" + x + "," + y + ")");
+                    onShipSunk(shipType, x, y, orientation);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                    System.out.println("--> Failed to handle sunk ship!");
+                }
+            });
         });
 
         // When we can start, tell implementation
         socket.on("getBoard", args -> {
-            System.out.println("> Battlecomp sent an instance of the board!");
-            try {
-                JSONArray lines = ((JSONObject) args[0]).getJSONArray("board");
-                System.out.println("-->    0 1 2 3 4 5 6 7 8 9");
-                System.out.println("-->   *--------------------*");
-                for (int i = 0; i < lines.length(); i++) {
-                    System.out.print("--> " + i + " |");
-                    JSONArray line = lines.getJSONArray(i);
-                    for (int j = 0; j < line.length(); j++) {
-                        if (line.getInt(j) == 1)
-                            System.out.print("# ");
-                        else if (line.getInt(j) == 2)
-                            System.out.print("X ");
-                        else
-                            System.out.print("  ");
+            runAsync(() -> {
+                System.out.println(preifx+"> Battlecomp sent an instance of the board!");
+                try {
+                    JSONArray lines = ((JSONObject) args[0]).getJSONArray("board");
+                    System.out.println("-->    0 1 2 3 4 5 6 7 8 9");
+                    System.out.println("-->   *--------------------*");
+                    for (int i = 0; i < lines.length(); i++) {
+                        System.out.print("--> " + i + " |");
+                        JSONArray line = lines.getJSONArray(i);
+                        for (int j = 0; j < line.length(); j++) {
+                            if (line.getInt(j) == 1)
+                                System.out.print("# ");
+                            else if (line.getInt(j) == 2)
+                                System.out.print("X ");
+                            else
+                                System.out.print("  ");
+                        }
+                        System.out.println("|");
                     }
-                    System.out.println("|");
+                    System.out.println("-->   *--------------------*");
+                } catch (JSONException e) {
+                    e.printStackTrace();
                 }
-                System.out.println("-->   *--------------------*");
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
+            });
         });
 
         // Handle being told to place our game objects
         socket.on("setupBoard", ignored -> {
-            System.out.println("> Server requesting board setup...");
-            setState(GameState.BOARD_SETUP);
-            List<PlacedShip> ships = placeShips();
-            JSONArray toSend = new JSONArray();
-            for (PlacedShip ship : ships)
-                toSend.put(ship.toJson());
-            JSONObject arrayWrap = new JSONObject();
-            try {
-                arrayWrap.put("ships", toSend);
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-            System.out.println(arrayWrap);
-            socket.emit("setBoard", arrayWrap);
-            socket.once("success", args -> {
+            runAsync(() -> {
+                System.out.println(preifx+"> Server requesting board setup...");
+                setState(GameState.BOARD_SETUP);
+                List<PlacedShip> ships = placeShips();
+                JSONArray toSend = new JSONArray();
+                for (PlacedShip ship : ships)
+                    toSend.put(ship.toJson());
+                JSONObject arrayWrap = new JSONObject();
+                try {
+                    arrayWrap.put("ships", toSend);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                System.out.println(arrayWrap);
+                socket.emit("setBoard", arrayWrap);
+            });
+        });
+
+        socket.on("success", args -> {
+            runAsync(() -> {
+                JSONObject object = (JSONObject) args[0];
+                System.out.println(object);
+                try {
+                    if (object.getString("action").equals("StartPlay")) {
+                        System.out.println(preifx+"> Successfully playing Battlecomp game " + gameId + "!");
+                        setState(GameState.PLAYING);
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            });
+        });
+
+        socket.on("success", args -> {
+            runAsync(() -> {
                 JSONObject object = (JSONObject) args[0];
                 try {
                     if (object.getString("action").equals("SetBoard")) {
-                        System.out.println("> Successfully set board for game " + gameId);
+                        System.out.println(preifx+"> Successfully set board for game " + gameId);
                         setState(GameState.BOARD_WAITING);
-                        //noinspection deprecation // TODO Remove this & below
                         getBoard();
-                    } else
-                        System.out.println("> Failed to read board set success!");
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            });
+        });
+
+        socket.on("success", args -> {
+            runAsync(() -> {
+                JSONObject object = (JSONObject) args[0];
+                try {
+                    if (object.getString("action").equals("JoinGame")) {
+                        System.out.println("-------> "+object);
+                        this.gameId = gameId;
+                        System.out.println("-------> " + gameId);
+                        System.out.println(preifx+"> Successfully joined Battlecomp game " + gameId + "!");
+                        setState(GameState.JOINED);
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            });
+        });
+
+        socket.on("success", args -> {
+            runAsync(() -> {
+                JSONObject object = (JSONObject) args[0];
+                try {
+                    if (object.getString("action").equals("StartGame")) {
+                        System.out.println(preifx+"> Successfully started Battlecomp game " + gameId + "!");
+                        setState(GameState.STARTED);
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            });
+        });
+
+        socket.on("success", args -> {
+            runAsync(() -> {
+                JSONObject object = (JSONObject) args[0];
+                try {
+                    if (object.getString("action").equals("CreateGame")) {
+                        gameId = object.getInt("message");
+                        System.out.println(preifx+"> Successfully created Battlecomp game " + gameId);
+                        setState(GameState.JOINED);
+                    }
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
@@ -245,20 +355,20 @@ public abstract class BattlecompClient {
         ** Attempt to connect
          */
 
-        System.out.println("> Attempting to connect to Battlecomp server...");
+        System.out.println(preifx+"> Attempting to connect to Battlecomp server...");
         socket.connect();
     }
 
     public void onConnect() {
         connected = true;
         setState(GameState.CONNECTED);
-        System.out.println("> Successfully connected to Battlecomp server!");
+        System.out.println(preifx+"> Successfully connected to Battlecomp server!");
     }
 
     public void onDisconnect() {
         connected = false;
         setState(GameState.DISCONNECTED);
-        System.out.println("> Disconnected from Battlecomp server!");
+        System.out.println(preifx+"> Disconnected from Battlecomp server!");
     }
 
     public void onCanStart() {
@@ -271,21 +381,8 @@ public abstract class BattlecompClient {
 
     // Creates game
     public void createGame() {
-        System.out.println("> Attempting to host Battlecomp game");
+        System.out.println(preifx+"> Attempting to host Battlecomp game");
         socket.emit("createGame", "");
-        socket.once("success", args -> {
-            JSONObject object = (JSONObject) args[0];
-            try {
-                if (object.getString("action").equals("CreateGame")) {
-                    gameId = object.getInt("message");
-                    System.out.println("> Successfully created Battlecomp game " + gameId);
-                    setState(GameState.JOINED);
-                } else
-                    System.out.println("> Failed to read game ID!");
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-        });
     }
 
     // Join a hosted game
@@ -297,54 +394,17 @@ public abstract class BattlecompClient {
             e.printStackTrace();
             return;
         }
-        System.out.println("> Attempting to join Battlecomp game " + gameId);
+        this.gameId = gameId;
+        System.out.println(preifx+"> Attempting to join Battlecomp game " + gameId);
         socket.emit("joinGame", obj);
-        socket.once("success", args -> {
-            this.gameId = gameId;
-            JSONObject object = (JSONObject) args[0];
-            try {
-                if (object.getString("action").equals("JoinGame")) {
-                    System.out.println("> Successfully joined Battlecomp game " + gameId + "!");
-                    setState(GameState.JOINED);
-                } else
-                    System.out.println("> Failed to read join success!");
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-        });
     }
 
     public void start() {
         socket.emit("startGame", "");
-        socket.once("success", args -> {
-            JSONObject object = (JSONObject) args[0];
-            try {
-                if (object.getString("action").equals("StartGame")) {
-                    System.out.println("> Successfully started Battlecomp game " + gameId + "!");
-                    setState(GameState.STARTED);
-                } else
-                    System.out.println("> Failed to read start success!");
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-        });
     }
 
     public void play() {
         socket.emit("startPlay", "");
-        socket.once("success", args -> {
-            JSONObject object = (JSONObject) args[0];
-            System.out.println(object);
-            try {
-                if (object.getString("action").equals("StartPlay")) {
-                    System.out.println("> Successfully playing Battlecomp game " + gameId + "!");
-                    setState(GameState.PLAYING);
-                } else
-                    System.out.println("> Failed to read play success!");
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-        });
     }
 
     public int getGameId() {
@@ -380,13 +440,17 @@ public abstract class BattlecompClient {
 
     public abstract void onOppMapUpdate(int[][] map);
 
+    public void victory() {};
+
+    public void loss() {};
+
     public GameState getState() {
         return state;
     }
 
     private void setState(GameState state) {
         this.state = state;
-        System.out.println("> Battlecomp state set to " + state);
+        System.out.println(preifx+"> Battlecomp state set to " + state);
         onGamestateUpdate(state);
     }
 }
